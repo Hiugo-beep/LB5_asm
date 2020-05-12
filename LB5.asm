@@ -231,13 +231,11 @@ output_int proc near USES cx,dx,ax
 output_int endp   
 
     welcome db 'Hello! Program start!$'
-    file_address dw 0  
     buffer db 401 DUP ('$') 
     file_name_size equ 70
     file_name db file_name_size dup('$')
-    count_line db 0
     argc dw 0 
-        error1 db 'ERROR1:FILE NOT FOUND$' 
+    error1 db 'ERROR1:FILE NOT FOUND$' 
     error2 db 'ERROR2:PATH NOT FOUND$'  
     error3 db 'ERROR3:TOO MANY OPEN FILE$' 
     error4 db 'ERROR4:ACCESS IS DENIED$' 

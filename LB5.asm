@@ -3,36 +3,44 @@
 org 100h     
 Begin: 
     PUSHA  
-    print welcom
+    print welcome
     call get_file_name     
     opening_file:  
-    call open_file 
-    call read_file 
+    call open_file
     read_data:    
-        mov cx, 1024
-        mov dx, offset buffer
+        mov cx,400
+        mov dx, offset buffer 
         mov ah, 3Fh
         int 21h
-        jc close_file
+        CMP ax, 400
+        je not_close 
+        inc flag_close
+        not_close:
+        push cx   
         mov cx, ax
-        jcxz close_file 
-        push cx  
-        push ax 
-        push di
-        mov cx,1024   
+         push ax
+         push si
+        mov si, offset buffer  
         loooop:
-            mov ax, [di]
-            CMP ax, 10
-            JNE not_str 
+            mov ax, [si]
+                           
+            CMP al, 10 
+            JE stra
+
+            JMP not_str 
+            stra:
             inc count_length 
             not_str: 
-                inc di
-        loop loooop
-        pop di  
+            inc si
+        loop loooop 
+        pop si
         pop ax
         pop cx
+        CMP flag_close , 1
+        je close_file  
     jmp short read_data
-    close_file:  
+    close_file:
+        inc count_length 
         mov ax, count_length
         mov number, ax
         call   output_int
@@ -126,15 +134,20 @@ jmp get_symbols
     too_many_args:
     print too_many_message
     jmp exit 
-    mov [si], 0 
+    mov [si], 0  
+    
 ret
 get_file_name endp 
 ;//////////////////////////////////////////OPEN_FILE///////////////////////////  
-open_file proc
-    mov ax, 3D02h;for read and write(3D)		        
-    lea dx, file_name        
-    int 21h 
-    jc exit 
+open_file proc   
+    
+    mov dx, offset file_name   ;address ASCIZ-string with name
+    mov ah, 3Dh             ;DOS 3Dh
+    mov al, 00h             ;00 - only reading 0 000 00 0
+    int 21h                 ;open file 
+    jc exit                 ;if error - exit
+    mov bx, ax              ;bx - identefy file
+    ;mov di, 01              ;di identify STDOUT (screen)   
     print open_message         
 ret
 open_file endp             
@@ -215,23 +228,12 @@ output_int proc near USES cx,dx,ax
     END:        
 	popa               
     ret
-output_int endp 
-read_file PROC NEAR USES cx,dx,ax
-    mov dx, offset f_name   ;address ASCIZ-string with name
-    mov ah, 3Dh             ;DOS 3Dh
-    mov al, 00h             ;00 - only reading 0 000 00 0
-    int 21h                 ;open file 
-    jc exit                 ;if error - exit
-    mov bx, ax              ;bx - identefy file
-    mov di, 01              ;di identify STDOUT (screen)  
-    RET
-read_file ENDP     
+output_int endp   
 
-    welcom db 'hello! Program start!$'
-    f_name db 'b.txt',0
+    welcome db 'Hello! Program start!$'
     file_address dw 0  
-    buffer db 1024 DUP ('$') 
-    file_name_size equ 70 
+    buffer db 401 DUP ('$') 
+    file_name_size equ 70
     file_name db file_name_size dup('$')
     count_line db 0
     argc dw 0 
@@ -248,7 +250,9 @@ read_file ENDP
     number dw 0
     count_length dw 0
     sign_number dw 0       
-    del dw 1         
+    del dw 1 
+    buf dw 0 
+    flag_close db 0       
     new_number db 9,32, '$' 
     str db 'strings in file!'
     end_program db 'Program end!$'  
